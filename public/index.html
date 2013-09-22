@@ -13,13 +13,13 @@
   
 <div class="paperscript"><script type="text/paperscript" canvas="canvas-1">
 
-// The amount of circles we want to make:
-var count = 150;
+var numDots = 50;
+var dotsLayer = new Layer();
+var tweetsLayer = new Layer();
 
 function createDot(color) {
 	var center = Point.random() * view.size;
 
-	// Create a symbol, which we will use to place instances of later:
 	var path = new Path.Circle({
 		center: center,
 		radius: 10,
@@ -29,18 +29,24 @@ function createDot(color) {
 	return path;
 }
 
-var dots = [];
-var colorBase = new Color('red');
+function placeDots(count) {
+	var currentDots = dotsLayer.children.length;
+	var shouldBeDots = count;
+	var diffDots = shouldBeDots - currentDots;
 
-// Place the instances of the dots:
-for (var i = 0; i < count; i++) {	
-	colorBase.hue += 1;
-	var dot = createDot(colorBase);
-	dot.scale(i/count);
-	dots.push(dot);
+	if(diffDots > 0) {
+ 		for (var i = 0; i < diffDots; i++) {
+			var color = new Color(Math.random() + 0.1, Math.random() + 0.1, Math.random() + 0.1);
+			var dot = createDot(color);
+			dot.scale(i / diffDots);
+			dotsLayer.addChild(dot);
+		}	
+	} else {
+		dotsLayer.removeChildren(shouldBeDots);
+	}
 }
 
-var texts = [];
+placeDots(numDots);    
 
 function addText(text) {
 	/// Create a centered text item at the center of the view:
@@ -52,9 +58,8 @@ function addText(text) {
 		content: text
 	});
 
-	texts.push(textBox);
+	tweetsLayer.addChild(textBox);
 }
-
 
 // Define a random point in the view, which we will be moving
 // the text item towards.
@@ -64,8 +69,8 @@ var destination = Point.random() * view.size;
 function onFrame(event) {
 	// Run through the active layer's children list and change
 	// the position of the placed symbols:
-	for (var i = 0; i < count; i++) {
-		var item = project.activeLayer.children[i];
+	for (var i = 0; i < dotsLayer.children.length; i++) {
+		var item = dotsLayer.children[i];
 		
 		// Move the item 1/20th of its width to the right. This way
 		// larger circles move faster than smaller circles:
@@ -82,16 +87,16 @@ function onFrame(event) {
 	// between it and the destination.
 	
 	
-	for(var i = 0; i < texts.length; i++) {
+	for(var i = 0; i < tweetsLayer.children.length; i++) {
 	
 		// The vector is the difference between the position of
 		// the text item and the destination point:
-		var vector = destination - texts[i].position;
+		var vector = destination - tweetsLayer.children[i].position;
 
 		// We add 1/30th of the vector to the position property
 		// of the text item, to move it in the direction of the
 		// destination point:
-		texts[i].position += vector / 30;
+		tweetsLayer.children[i].position += vector / 30;
 
 		// If the distance between the path and the destination is less
 		// than 5, we define a new random point in the view to move the
@@ -110,7 +115,9 @@ var socket = io.connect('http://localhost:5000');
   });
   socket.on('sentiment', function (data) {
     console.log("Sentiment : " + data);
-    
+    if(data > 0){
+    	placeDots(data*numDots);	
+    }
   });
   socket.on('users', function (data) {
     console.log("Users connected: " + data);
@@ -118,6 +125,7 @@ var socket = io.connect('http://localhost:5000');
   });
 
 </script>
-<div class="canvas"><canvas resize="true" id="canvas-1"></canvas></div></div>
+<div class="canvas"><canvas resize="true" id="canvas-1"></canvas></div>
+</div>
   </body>
 </html>
