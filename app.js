@@ -12,6 +12,13 @@ app.use(app.router);
 app.use(express.static('public'));
 app.use(express.errorHandler());
 
+//Start the servers
+var port = process.env.PORT || 5000;
+var server = app.listen(port, function() {
+  console.log("Listening on " + port);
+});
+var io = socket.listen(server);
+
 var active_connections = 0;
 io.sockets.on('connection', function (socket) {
 	active_connections++;
@@ -31,14 +38,16 @@ function emitTweet(raw_tweet) {
   	parsed_tweet.userimage = raw_tweet.user.profile_image_url;
 
   	io.sockets.emit('tweet', parsed_tweet);
+  	console.log("Emitted tweet: " + parsed_tweet.text);
 }
 
 function emitSentiment(text) {
 	sentiment(text, function (err, result) {
-		if(err) { console.log("getSentiment: " + err); break; }
-
-	    console.dir(result);
-	    io.sockets.emit('sentiment', result.score);
+		if(err) console.log("getSentiment: " + err);
+		if(result.score != 0) {
+			io.sockets.emit('sentiment', result.score);
+	    	console.log("Emitted score: " + result.score);	
+		}
 	});
 }
 
@@ -67,12 +76,3 @@ twit.stream('statuses/filter', {'track': 'iPhone 5c'}, function(stream) {
   });
 
 });
-
-//Start the servers
-var port = process.env.PORT || 5000;
-app.listen(port, function() {
-  console.log("App listening on " + port);
-});
-var io = socket.listen(port, function() {
-  console.log("Socket.io listening on " + port);
-})
