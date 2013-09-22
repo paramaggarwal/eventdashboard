@@ -8,8 +8,40 @@
   <script src="//cdnjs.cloudflare.com/ajax/libs/paper.js/0.9.9/paper.js"></script>
   <script src="//cdnjs.cloudflare.com/ajax/libs/socket.io/0.9.16/socket.io.min.js"></script>
   <title>Paper.js - Paper.js</title>
+  <style>
+  html, body {
+  	margin: 0;
+  	padding: 0;
+  }
+
+  .fullscreen {
+  	width: 100%;
+  	height: 100%;
+  }
+
+  .tweet {
+  	transition: margin 2s;
+	-webkit-transition: margin 2s; /* Safari */
+	text-align: center;
+  }
+
+  .in {
+  	margin-left: -100%;
+  	margin-top: 0%;
+  }
+
+  .center {
+  	margin: auto;
+  }
+
+  .out {
+  	margin-left: 100%;
+  	margin-top: 0;
+  }
+
+  </style>
 </head>
-  <body class="fullscreen">
+  <body>
   
 <div class="paperscript"><script type="text/paperscript" canvas="canvas-1">
 
@@ -27,6 +59,21 @@ function createDot(color) {
 	});
 
 	return path;
+}
+
+function addNewLines(text_line) {
+	var words = text_line.split(' ');
+
+	var tempText = "";
+	for (var i = 0; i < words.length; i++) {
+  		if((i%4) == 0) {
+			tempText += words[i] + "\n";
+		} else {
+    		tempText += words[i] + " ";
+		}
+	}
+
+	return tempText;
 }
 
 function placeDots(count) {
@@ -47,6 +94,10 @@ function placeDots(count) {
 }
 
 placeDots(numDots);    
+var emptyText = addText("");
+tweetsLayer.addChild(emptyText);
+emptyText = addText("Tweet with #hackday to try this");
+tweetsLayer.addChild(emptyText);
 
 function addText(text) {
 	/// Create a centered text item at the center of the view:
@@ -58,12 +109,8 @@ function addText(text) {
 		content: text
 	});
 
-	tweetsLayer.addChild(textBox);
+	return textBox;
 }
-
-// Define a random point in the view, which we will be moving
-// the text item towards.
-var destination = Point.random() * view.size;
 
 // The onFrame function is called up to 60 times a second:
 function onFrame(event) {
@@ -83,35 +130,40 @@ function onFrame(event) {
 		}
 	}
 
-	// Each frame, move the path 1/30th of the difference in position
-	// between it and the destination.
+	var vector1 = view.center - tweetsLayer.lastChild.position;
+	tweetsLayer.lastChild.position += vector1 / 30;
 	
+	var vector2 = view.size - tweetsLayer.firstChild.position;
+	tweetsLayer.firstChild.position += vector2 / 30;
 	
+
+/*
 	for(var i = 0; i < tweetsLayer.children.length; i++) {
 	
 		// The vector is the difference between the position of
 		// the text item and the destination point:
-		var vector = destination - tweetsLayer.children[i].position;
+		var vector = view.center - tweetsLayer.children[i].position;
 
 		// We add 1/30th of the vector to the position property
 		// of the text item, to move it in the direction of the
 		// destination point:
 		tweetsLayer.children[i].position += vector / 30;
-
-		// If the distance between the path and the destination is less
-		// than 5, we define a new random point in the view to move the
-		// path to:
-		if (vector.length < 5) {
-			destination = Point.random() * view.size;
-		}	
+	
 	}
+*/
 
 }
 
-var socket = io.connect('http://localhost:5000');
+var socket = io.connect('/');
   socket.on('tweet', function (data) {
-    console.log("Tweet: " + data);
-    addText(data.text);
+    var warpText = addNewLines(data.text);
+
+    var textInstance = addText(warpText);
+    tweetsLayer.addChild(textInstance);
+   
+   	tweetsLayer.firstChild.remove();
+    //console.log(tweetsLayer.children);
+ 
   });
   socket.on('sentiment', function (data) {
     console.log("Sentiment : " + data);
@@ -120,7 +172,7 @@ var socket = io.connect('http://localhost:5000');
     }
   });
   socket.on('users', function (data) {
-    console.log("Users connected: " + data);
+    //console.log("Users connected: " + data);
     
   });
 

@@ -5,6 +5,8 @@ var socket = require('socket.io');
 
 var app = express();
 
+var searchString = "hackday";
+
 app.use(express.favicon());
 app.use(express.logger('dev'));
 app.use(express.bodyParser());
@@ -59,7 +61,7 @@ var twit = new twitter({
   access_token_secret: 'REe0AQ7WDIdnrdxK2yUIbRcamUc0yxjnpTtDDxbn4'
 });
 
-twit.stream('statuses/filter', {'track': 'iPhone 5c'}, function(stream) {
+twit.stream('statuses/filter', {'track': searchString}, function(stream) {
   stream.on('data', function (raw_tweet) { 	
   	emitTweet(raw_tweet);
 	emitSentiment(raw_tweet.text);
