@@ -1,0 +1,16 @@
+{ score: 0,
+  comparative: 0,
+  tokens: 
+   [ 'rt',
+     'gagtweets',
+     'finally',
+     'got',
+     'my',
+     'iphone',
+     'c',
+     '',
+     'httptcojwudckxop' ],
+  words: [],
+  positive: [],
+  negative: [] }
+
